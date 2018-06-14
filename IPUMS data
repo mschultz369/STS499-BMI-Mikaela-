@@ -1,0 +1,15 @@
+library(dplyr)
+newIPUMS <- read.csv2("/Users/Mschultz/Desktop/newdataset.csv", header = TRUE, sep=",")
+newIPUMS_12_20 <- filter(newIPUMS, AGE>11, AGE<21)
+table(newIPUMS_12_20$AGE)
+hist(newIPUMS_12_20$WEIGHTKID)
+plot(newIPUMS_12_20$AGE,newIPUMS_12_20$WEIGHTKID)
+
+sum(newIPUMS$AGE<21)
+mean(newIPUMS$AGE<21)
+
+newIPUMS_12_20 <- filter(newIPUMS, AGE>11, AGE<21)
+
+mutate(new_weight = case_when(
+                      newIPUMS_12_20$AGE > 11 ~ HEIGHTKID 
+                      newIPUMS_12_20$AGE < 21 ~ HEIGHT)
