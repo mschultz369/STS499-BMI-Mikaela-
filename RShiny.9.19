@@ -50,10 +50,8 @@ server <- function(input, output) {
   
   
   subdata <- reactive({
-    sex <- ifelse(input$SEX == "Male", 1, 2)
-    newIPUMS <- filter(SmallIPUMS, SEX==sex)
+    filter(SmallIPUMS, SEX==ifelse(input$SEX == "Male", 1, 2))
   }) 
-  
   
   output$distPlot <- renderPlot({
     ggplot(data=subdata(), aes(x=AGE, y=bmi)) + geom_point()
@@ -61,7 +59,7 @@ server <- function(input, output) {
   })
     
    output$tablehead <- renderTable({
-     head(SmallIPUMS)
+     head(subdata())
    })
 }
 
