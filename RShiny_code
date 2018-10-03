@@ -1,0 +1,91 @@
+#
+# This is a Shiny web application. You can run the application by clicking
+# the 'Run App' button above.
+#
+# Find out more about building applications with Shiny here:
+#
+#    http://shiny.rstudio.com/  
+#
+
+
+library(shiny)
+library(ggplot2)
+library(dplyr)
+
+# read in dataset and create our model 
+SmallIPUMS <- read.csv("newIPUMS.csv", header=TRUE)
+SmallIPUMS <- SmallIPUMS[, -1]
+fullmod <- lm(bmi ~ AGE + age.SQ + sex + AGE*sex + age.SQ*sex + race + race*sex +
+                  pooryn + pooryn*race + pooryn*sex + pooryn*AGE + pooryn*age.SQ, data = SmallIPUMS)
+newdata3 <- data.frame(list(AGE=seq(12,20,1), age.SQ=seq(12,20,1)^2, sex="Male", race="Black", pooryn="Above")) %>%
+  rbind(data.frame(list(AGE=seq(12,20,1), age.SQ=seq(12,20,1)^2, sex="Female", race="Black", pooryn="Above"))) %>%
+  rbind(data.frame(list(AGE=seq(12,20,1), age.SQ=seq(12,20,1)^2, sex="Male", race="Black", pooryn="Below"))) %>%
+  rbind(data.frame(list(AGE=seq(12,20,1), age.SQ=seq(12,20,1)^2, sex="Female", race="Black", pooryn="Below"))) %>%
+  rbind(data.frame(list(AGE=seq(12,20,1), age.SQ=seq(12,20,1)^2, sex="Male", race="aaWhite", pooryn="Above"))) %>%
+  rbind(data.frame(list(AGE=seq(12,20,1), age.SQ=seq(12,20,1)^2, sex="Female", race="aaWhite", pooryn="Above"))) %>%
+  rbind(data.frame(list(AGE=seq(12,20,1), age.SQ=seq(12,20,1)^2, sex="Male", race="aaWhite", pooryn="Below"))) %>%
+  rbind(data.frame(list(AGE=seq(12,20,1), age.SQ=seq(12,20,1)^2, sex="Female", race="aaWhite", pooryn="Below"))) %>%
+  rbind(data.frame(list(AGE=seq(12,20,1), age.SQ=seq(12,20,1)^2, sex="Male", race="AL Native / Am. Ind.", pooryn="Above"))) %>%
+  rbind(data.frame(list(AGE=seq(12,20,1), age.SQ=seq(12,20,1)^2, sex="Female", race="AL Native / Am. Ind.", pooryn="Above"))) %>%
+  rbind(data.frame(list(AGE=seq(12,20,1), age.SQ=seq(12,20,1)^2, sex="Male", race="AL Native / Am. Ind.", pooryn="Below"))) %>%
+  rbind(data.frame(list(AGE=seq(12,20,1), age.SQ=seq(12,20,1)^2, sex="Female", race="AL Native / Am. Ind.", pooryn="Below"))) %>%
+  rbind(data.frame(list(AGE=seq(12,20,1), age.SQ=seq(12,20,1)^2, sex="Male", race="Asian", pooryn="Above"))) %>%
+  rbind(data.frame(list(AGE=seq(12,20,1), age.SQ=seq(12,20,1)^2, sex="Female", race="Asian", pooryn="Above"))) %>%
+  rbind(data.frame(list(AGE=seq(12,20,1), age.SQ=seq(12,20,1)^2, sex="Male", race="Asian", pooryn="Below"))) %>%
+  rbind(data.frame(list(AGE=seq(12,20,1), age.SQ=seq(12,20,1)^2, sex="Female", race="Asian", pooryn="Below"))) %>%
+  rbind(data.frame(list(AGE=seq(12,20,1), age.SQ=seq(12,20,1)^2, sex="Male", race="Multiple", pooryn="Above"))) %>%
+  rbind(data.frame(list(AGE=seq(12,20,1), age.SQ=seq(12,20,1)^2, sex="Female", race="Multiple", pooryn="Above"))) %>%
+  rbind(data.frame(list(AGE=seq(12,20,1), age.SQ=seq(12,20,1)^2, sex="Male", race="Multiple", pooryn="Below"))) %>%
+  rbind(data.frame(list(AGE=seq(12,20,1), age.SQ=seq(12,20,1)^2, sex="Female", race="Multiple", pooryn="Below")))
+lmtest2 <- predict(fullmod, newdata=newdata3, interval = "prediction", level=.95)
+lmtest2 <- cbind(newdata3, lmtest2)
+
+
+# Define UI for application that draws a histogram
+
+ui <- fluidPage(
+   
+   # Application title
+   titlePanel("BMI for Age"),
+   
+   # Sidebar with a slider input for number of bins 
+   sidebarLayout(
+      sidebarPanel(
+          selectInput("color", "Select Color", choices = c("pooryn", "sex", "race"), selected = "pooryn"
+        ),
+        
+         selectInput("rows", "Select Row", choices = c("pooryn", "sex", "race"), selected = "sex"
+       ),
+        
+       selectInput("columns", "Select Column", choices = c("pooryn", "sex", "race"), selected = "race"
+       )
+       
+      ),
+      # Show a plot of the generated distribution
+      mainPanel(
+         plotOutput("distPlot"), 
+         verbatimTextOutput("model")
+      )
+   )
+)
+
+# Define server logic required to draw a histogram
+server <- function(input, output) {
+
+  
+  output$distPlot <- renderPlot({
+    ggplot(data=lmtest2, aes_string(x = "AGE", y = "fit", color = input$color)) + 
+      geom_line() + 
+      facet_grid(paste(input$rows, "~" ,input$columns)) 
+    
+  })
+   
+   
+   output$model <- renderPrint({
+     fullmod
+   })
+}
+
+# Run the application 
+shinyApp(ui = ui, server = server)
+
